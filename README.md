@@ -3,11 +3,12 @@
 ### This repository contains an analysis of a Human Resources (HR) dashboard, providing insights into employee data. The dashboard is structured to offer both a high-level overview and detailed employee-level information.
 
 # Data Source :
-<a href="https://github.com/gkarthik333/Human_Resources_Dashboard/blob/main/HR_Data.csv">Dataset</a>
+<a href="https://github.com/gkarthik333/Human_Resources_Dashboard/blob/main/HR_Data.csv">File</a>
 
 
-
-# Overall 
+# Dashboard
+<a href="https://github.com/gkarthik333/Human_Resources_Dashboard/blob/main/HR_Data.csv">File</a>
+## Overall 
 ![HR - Overview](https://github.com/user-attachments/assets/42293ca3-aa40-46d4-866f-fe1f645b940c)
 ### Overview:
 * **Active Employees:** Indicates the current number of active employees (7,984).
