@@ -3,7 +3,7 @@
 ### This repository contains an analysis of a Human Resources (HR) dashboard, providing insights into employee data. The dashboard is structured to offer both a high-level overview and detailed employee-level information.
 
 # Overall 
-
+![HR - Overview](https://github.com/user-attachments/assets/42293ca3-aa40-46d4-866f-fe1f645b940c)
 ### Overview:
 * **Active Employees:** Indicates the current number of active employees (7,984).
 * **Hired:** Shows the total number of new hires (8,950).
@@ -20,7 +20,7 @@
 
 
 # Details:
-
+![HR - Details](https://github.com/user-attachments/assets/97aad506-0c59-4213-ae94-c05a60ba776d)
 * **Employee ID:** A unique identifier for each employee.
 * **Demographics:** Displays employee age and education level.
 * **Role:** Shows the specific job title of each employee.
