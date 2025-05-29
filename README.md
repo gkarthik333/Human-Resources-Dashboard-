@@ -1,4 +1,4 @@
-# Human Resources Dashboard Analysis
+# Human Resources Analysis
 
 ### This repository contains an analysis of a Human Resources (HR) dashboard, providing insights into employee data. The dashboard is structured to offer both a high-level overview and detailed employee-level information.
 
