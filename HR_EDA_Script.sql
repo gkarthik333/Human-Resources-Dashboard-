@@ -1,0 +1,291 @@
+-- Create Database
+Create database hr_db;
+use hr_db;
+
+drop table hrdata;
+-- Create table - 
+create table hrdata (
+			emp_id varchar(255) primary key,
+            first_name varchar(255),
+            last_name varchar(255),
+            gender varchar(255),
+            state varchar(255),
+            city varchar(255),
+            education_level varchar(255),
+            d_o_b Date,
+            hire_date date,
+            term_date date,
+            dept varchar(255),
+            job_title varchar(255),
+            salary decimal(15,2),
+            performance varchar(255)
+            );
+            
+# Check Server Setting:Enable LOCAL_INFILE on the MySQL Server( error 29 solution)
+SHOW GLOBAL VARIABLES LIKE 'local_infile'; -- if off do next step
+SET GLOBAL local_infile = 1; 
+
+-- Data Import --
+LOAD DATA INFILE 'D:/Portfolio Projects/Hr analysis/human resource dataset.csv'
+INTO TABLE hrdata
+FIELDS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS
+(   @emp_id, 
+    @first_name,
+    @last_name, 
+    @gender,
+    @state,
+    @city,
+    @education_level,
+    @d_o_b,
+    @hire_date,
+    @term_date, 
+    @dept,
+    @job_title,
+    @salary,
+    @performance
+)
+SET
+    emp_id = NULLIF(@emp_id, ''), 
+    first_name = NULLIF(@first_name, ''),
+    last_name = NULLIF(@last_name, ''),
+    gender = NULLIF(@gender, ''),
+    state = NULLIF(@state, ''),
+    city = NULLIF(@city, ''),
+    education_level = NULLIF(@education_level, ''),
+    d_o_b = STR_TO_DATE(NULLIF(@d_o_b, ''), '%Y-%m-%d'), 
+    hire_date = STR_TO_DATE(NULLIF(@hire_date, ''), '%Y-%m-%d'), 
+    term_date = CASE WHEN @term_date = '' THEN NULL ELSE STR_TO_DATE(@term_date, '%Y-%m-%d') END,
+    dept = NULLIF(@dept, ''),
+    job_title = NULLIF(@job_title, ''),
+    salary = NULLIF(@salary, ''),
+    performance = NULLIF(@performance, '');
+    
+-- ----------------------------------------------------------------------Exploratory Data Analysis (EDA)----------------------------------------------------------
+-- ------------------Basic Table Overview
+
+-- Check table structure
+DESCRIBE hrdata;
+
+-- Count total records
+SELECT COUNT(*) AS total_employees FROM hrdata;
+
+-- Check date ranges
+SELECT 
+    MIN(hire_date) AS earliest_hire,
+    MAX(hire_date) AS latest_hire,
+    MIN(d_o_b) AS oldest_employee,
+    MAX(d_o_b) AS youngest_employee
+FROM hrdata;
+
+-- Check NULL values in each column
+SELECT 
+    SUM(emp_id IS NULL) AS emp_id,
+    SUM(first_name IS NULL) AS first_name,
+    SUM(last_name IS NULL) AS last_name,
+    SUM(gender IS NULL) AS gender,
+    SUM(state IS NULL) AS state,
+    SUM(city IS NULL) AS city,
+    SUM(education_level IS NULL) AS education,
+    SUM(d_o_b IS NULL) AS birthdate,
+    SUM(hire_date IS NULL) AS hire_date,
+    SUM(term_date IS NULL) AS term_date,
+    SUM(dept IS NULL) AS dept,
+    SUM(job_title IS NULL) AS job_title,
+    SUM(salary IS NULL) AS salary,
+    SUM(performance IS NULL) AS performance,
+    COUNT(*) AS total_rows
+FROM hrdata;
+
+
+-- --------------------Demographic Analysis
+
+-- Gender distribution
+SELECT 
+    gender, 
+    COUNT(*) AS count,
+    ROUND(COUNT(*)*100 / (SELECT COUNT(*) FROM hrdata), 2) AS percentage
+FROM hrdata
+GROUP BY gender;
+
+-- Department gender distribution
+SELECT 
+    dept,
+    gender,
+    COUNT(*) AS no_of_emp,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY dept), 2) AS dept_percentage
+FROM hrdata
+GROUP BY dept, gender
+ORDER BY dept, gender;
+
+-- Age distribution (current age)
+SELECT 
+    FLOOR(
+		DATEDIFF(CURRENT_DATE, d_o_b)
+        /365) AS age,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY age
+ORDER BY age;
+
+-- State and city distribution
+SELECT 
+    state, 
+    city, 
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY state, city
+ORDER BY no_of_emp DESC;
+
+-- -----------------------------Employment Analysis
+-- Department distribution
+SELECT 
+    dept, 
+    COUNT(*) AS no_of_emp,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM hrdata), 2) AS percentage
+FROM hrdata
+GROUP BY dept
+ORDER BY no_of_emp DESC;
+
+-- Job title distribution
+SELECT 
+    job_title, 
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY job_title
+ORDER BY no_of_emp DESC;
+
+-- Current vs terminated employees
+SELECT 
+    CASE WHEN term_date IS NULL THEN 'Active' ELSE 'Terminated' END AS status,
+    COUNT(*) AS no_of_emp,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM hrdata), 2) AS percentage
+FROM hrdata
+GROUP BY status;
+
+-- -------------------------------------Compensation Analysis
+
+-- Salary statistics overall
+SELECT 
+    MIN(salary) AS min_salary,
+    MAX(salary) AS max_salary,
+    AVG(salary) AS avg_salary
+FROM hrdata;
+
+-- Salary by department
+SELECT 
+    dept,
+    MIN(salary) AS min_salary,
+    MAX(salary) AS max_salary,
+    AVG(salary) AS avg_salary,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY dept
+ORDER BY avg_salary DESC;
+
+-- Salary by job title
+SELECT 
+    job_title,
+    format(AVG(salary),'#,##0.00') as avg_salary,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY job_title
+ORDER BY avg_salary DESC;
+
+-- Salary by gender (pay equity check)
+SELECT 
+    gender,
+    format(AVG(salary),'#,##0.00') AS avg_salary,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY gender;
+
+-- -----------------------------------------------------------------------Performance Analysis
+
+-- Performance rating distribution
+SELECT 
+    performance,
+    COUNT(*) AS no_of_emp,
+		ROUND(
+			COUNT(*) * 100
+			/ (SELECT COUNT(*) FROM hrdata),
+            2) AS percentage
+FROM
+    hrdata
+GROUP BY performance
+ORDER BY no_of_emp DESC;
+
+-- Performance vs salary
+SELECT 
+    performance,
+    AVG(salary) AS avg_salary,
+    MIN(salary) AS min_salary,
+    MAX(salary) AS max_salary
+FROM hrdata
+GROUP BY performance
+ORDER BY avg_salary DESC;
+
+-- Performance by department
+SELECT 
+    dept,
+    performance,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY dept, performance
+ORDER BY dept, no_of_emp DESC;
+
+-- ------------------------------------------------------Education Analysis
+
+-- Education level distribution
+SELECT 
+    education_level,
+    COUNT(*) AS no_of_emp,
+    ROUND(COUNT(*) * 100.0 / (SELECT 
+                    COUNT(*)
+                FROM
+                    hrdata),
+            2) AS percentage
+FROM
+    hrdata
+GROUP BY education_level
+ORDER BY no_of_emp DESC;
+
+-- Education vs salary
+SELECT 
+    education_level,
+    AVG(salary) AS avg_salary,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY education_level
+ORDER BY avg_salary DESC;
+
+-- ------------------------------------------------------Hiring Trends
+
+-- Hiring by year
+SELECT 
+    YEAR(hire_date) AS hire_year,
+    COUNT(*) AS new_hires
+FROM hrdata
+GROUP BY YEAR(hire_date)
+ORDER BY hire_year;
+
+-- Termination by year
+SELECT 
+    YEAR(term_date) AS term_year,
+    COUNT(*) AS terminations
+FROM hrdata
+WHERE term_date IS NOT NULL
+GROUP BY YEAR(term_date)
+ORDER BY term_year;
+
+-- Average salary by hire year cohort
+SELECT 
+    YEAR(hire_date) AS hire_year,
+    AVG(salary) AS avg_salary,
+    COUNT(*) AS no_of_emp
+FROM hrdata
+GROUP BY YEAR(hire_date)
+ORDER BY hire_year;
+
